@@ -2,10 +2,11 @@
 #include <SDL.h>
 #include <stdio.h>
 #include<iostream>
+#include<SDL_image.h>
 using namespace std;
 
-const int SCREEN_WIDTH = 200;
-const int SCREEN_HEIGHT = 200;
+const int SCREEN_WIDTH = 300;
+const int SCREEN_HEIGHT = 300;
 
 
 enum KeySurfacePresses{
@@ -45,12 +46,20 @@ bool init() {
 }
 
 SDL_Surface* gLoadImage(string path) {
+	SDL_Surface* optimizedSurface = NULL;
 	SDL_Surface* loadedSurface = SDL_LoadBMP(path.c_str());
 	if (loadedSurface == NULL) {
 		printf("Error");
 	}
-
-	return loadedSurface;
+	else {
+		//convert to optimized surface version
+		optimizedSurface = SDL_ConvertSurface(loadedSurface, gScreenSurface->format,0);
+		if (optimizedSurface == NULL) {
+			printf("Failed");
+		}
+		SDL_FreeSurface(loadedSurface);
+	}
+	return optimizedSurface;
 }
 
 bool loadMedia()
@@ -154,8 +163,10 @@ int main(int argc, char* args[])
 							break;
 						}
 					}
+
+					SDL_Rect rectToFitSurface = { 0,0,SCREEN_HEIGHT,SCREEN_WIDTH };
 					// blit the current surface
-					SDL_BlitSurface(gCurrentSurface, NULL, gScreenSurface, NULL);
+					SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &rectToFitSurface);
 					SDL_UpdateWindowSurface(gWindow);
 				}
 			}
