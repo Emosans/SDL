@@ -18,6 +18,9 @@
     <ClCompile Include="simpleWindowImg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="overlapImages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
