@@ -1,2 +1,3 @@
 ﻿  main.cpp
+C:\Users\shrey\OneDrive\Documents\C++\SDL\SDL\main.cpp(2,1): warning C4067: unexpected tokens following preprocessor directive - expected a newline
   SDL.vcxproj -> C:\Users\shrey\OneDrive\Documents\C++\SDL\x64\Debug\SDL.exe

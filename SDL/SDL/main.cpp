@@ -1,29 +1,99 @@
-//Using SDL and standard IO
-#include <SDL.h>
-#include <stdio.h>
-#include<iostream>
+#include<SDL.h>
+#undef main;
 #include<SDL_image.h>
+#include<stdio.h>
+#include<iostream>
+#include<string>
 using namespace std;
 
-const int SCREEN_WIDTH = 300;
-const int SCREEN_HEIGHT = 300;
+class LTexture {
+public:
+	//allocate
+	LTexture();
 
+	//deallocate
+	~LTexture();
 
-enum KeySurfacePresses{
-	KEY_SURFACE_PRESS_DEF,
-	KEY_SURFACE_PRESS_UP,
-	KEY_SURFACE_PRESS_DOWN,
-	KEY_SURFACE_PRESS_LEFT,
-	KEY_SURFACE_PRESS_RIGHT,
-	KEY_SURFACE_PRESS_TOTAL
-	};
+	//free
+	void free();
 
-SDL_Surface* gLoadImage(string path);
+	//load tthe image file
+	bool loadFromFile(string path);
+
+	//render the images at x,y
+	void render(int x, int y);
+
+private:
+	SDL_Texture* finalTexture;
+	int mWidth;
+	int mHeight;
+};
+
 SDL_Window* gWindow = NULL;
 SDL_Surface* gScreenSurface = NULL;
-SDL_Surface* gKeySurfacePresses[KEY_SURFACE_PRESS_TOTAL];
-SDL_Surface* gCurrentSurface = NULL;
+SDL_Renderer* gRenderer;
+LTexture foregroundTexture;
+LTexture backgroundTexture;
 
+LTexture::LTexture() {
+	//initialize the texture initially as null
+	finalTexture = NULL;
+
+	//initialize the heigh and width as null
+	mWidth = 0;
+	mHeight = 0;
+}
+
+LTexture::~LTexture() {
+	//deallocates all memory
+	free();
+}
+
+bool LTexture::loadFromFile(string path) {
+	//free any initial texture
+	free();
+
+	SDL_Texture* newTexture = NULL;
+	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
+	if (loadedSurface == NULL) {
+		printf("Failed");
+	}
+	else {
+		//set color key
+		SDL_SetColorKey(loadedSurface, SDL_TRUE, SDL_MapRGB(loadedSurface->format, 0, 0xFF, 0xFF));
+
+		//create texture from pixles
+		newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+
+		if (newTexture == NULL) {
+			printf("Failed to create texture");
+		}
+		else {
+			//load widht and height of the loaded image
+			mWidth = loadedSurface->w;
+			mHeight = loadedSurface->h;
+		}
+		//free the surface
+		SDL_FreeSurface(loadedSurface);
+	}
+	//copy the texture from newTexture to finalTexture
+	finalTexture = newTexture;
+	return finalTexture != NULL;
+}
+
+void LTexture::free() {
+	if (finalTexture != NULL) {
+		finalTexture = NULL;
+		mWidth = 0;
+		mHeight = 0;
+	}
+}
+
+void LTexture::render(int x, int y) {
+	//{x pos,y pos, width, height}
+	SDL_Rect renderMaxSize= { x,y,mWidth,mHeight };
+	SDL_RenderCopy(gRenderer, finalTexture, NULL, &renderMaxSize);
+}
 
 bool init() {
 	bool success = true;
@@ -33,147 +103,85 @@ bool init() {
 		success = false;
 	}
 	else {
-		gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+		gWindow = SDL_CreateWindow("SDL Image", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 500, 500, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL) {
 			printf("Window could not be loaded");
 			success = false;
 		}
 		else {
-			gScreenSurface = SDL_GetWindowSurface(gWindow);
+			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+			if (gRenderer == NULL) {
+				printf("Failed");
+				success = false;
+			}
+			else {
+				gScreenSurface = SDL_GetWindowSurface(gWindow);
+			}
 		}
 	}
 	return success;
 }
 
-SDL_Surface* gLoadImage(string path) {
-	SDL_Surface* optimizedSurface = NULL;
-	SDL_Surface* loadedSurface = SDL_LoadBMP(path.c_str());
-	if (loadedSurface == NULL) {
-		printf("Error");
-	}
-	else {
-		//convert to optimized surface version
-		optimizedSurface = SDL_ConvertSurface(loadedSurface, gScreenSurface->format,0);
-		if (optimizedSurface == NULL) {
-			printf("Failed");
-		}
-		SDL_FreeSurface(loadedSurface);
-	}
-	return optimizedSurface;
-}
-
-bool loadMedia()
-{
+bool loadmedia() {
 	bool success = true;
-
-	//Load default surface
-	gKeySurfacePresses[KEY_SURFACE_PRESS_DEF] = gLoadImage("default.bmp");
-	if (gKeySurfacePresses[KEY_SURFACE_PRESS_DEF] == NULL)
-	{
-		printf("Failed to load default image!\n");
-		success = false;
+	//load foreground
+	if (!foregroundTexture.loadFromFile("Images/foo.png")) {
+		printf("FAiled");
+		success=false;
 	}
 
-	//Load up surface
-	gKeySurfacePresses[KEY_SURFACE_PRESS_UP] = gLoadImage("up.bmp");
-	if (gKeySurfacePresses[KEY_SURFACE_PRESS_UP] == NULL)
-	{
-		printf("Failed to load up image!\n");
-		success = false;
-	}
-
-	//Load down surface
-	gKeySurfacePresses[KEY_SURFACE_PRESS_DOWN] = gLoadImage("down.bmp");
-	if (gKeySurfacePresses[KEY_SURFACE_PRESS_UP] == NULL)
-	{
-		printf("Failed to load up image!\n");
-		success = false;
-	}
-
-	//Load left surface
-	gKeySurfacePresses[KEY_SURFACE_PRESS_LEFT] = gLoadImage("left.bmp");
-	if (gKeySurfacePresses[KEY_SURFACE_PRESS_UP] == NULL)
-	{
-		printf("Failed to load up image!\n");
-		success = false;
-	}
-
-	//Load right surface
-	gKeySurfacePresses[KEY_SURFACE_PRESS_RIGHT] = gLoadImage("right.bmp");
-	if (gKeySurfacePresses[KEY_SURFACE_PRESS_UP] == NULL)
-	{
-		printf("Failed to load up image!\n");
+	//load background
+	if (!backgroundTexture.loadFromFile("Images/background.png")) {
+		printf("failed");
 		success = false;
 	}
 	return success;
 }
 
-void close()
-{
-	for (int i = 0; i < KEY_SURFACE_PRESS_TOTAL; ++i)
-	{
-		SDL_FreeSurface(gKeySurfacePresses[i]);
-	}
-
+void close() {
+	SDL_DestroyRenderer(gRenderer);
 	SDL_DestroyWindow(gWindow);
-	gWindow = NULL;
+	foregroundTexture.free();
+	backgroundTexture.free();
 
+	IMG_Quit();
 	SDL_Quit();
 }
 
-int main(int argc, char* args[])
-{
-	
+int main() {
 	bool quit = false;
 	SDL_Event e;
-	
 
 	if (!init()) {
 		printf("Failed");
 	}
 	else {
-		if (!loadMedia()) {
-			printf("Failed to load media!\n");
+		if (!loadmedia()) {
+			printf("Failed");
 		}
 		else {
-			//make current surface
-			gCurrentSurface = gKeySurfacePresses[KEY_SURFACE_PRESS_DEF];
-
 			while (!quit) {
 				while (SDL_PollEvent(&e) != 0) {
 					if (e.type == SDL_QUIT) {
 						quit = true;
 					}
-					else if(e.type==SDL_KEYDOWN){
-						switch (e.key.keysym.sym) {
-						case SDLK_UP:
-							gCurrentSurface = gKeySurfacePresses[KEY_SURFACE_PRESS_UP];
-							break;
-						case SDLK_DOWN:
-							gCurrentSurface = gKeySurfacePresses[KEY_SURFACE_PRESS_DOWN];
-							break;
-						case SDLK_LEFT:
-							gCurrentSurface = gKeySurfacePresses[KEY_SURFACE_PRESS_LEFT];
-							break;
-						case SDLK_RIGHT:
-							gCurrentSurface = gKeySurfacePresses[KEY_SURFACE_PRESS_RIGHT];
-							break;
-						default:
-							gCurrentSurface = gKeySurfacePresses[KEY_SURFACE_PRESS_DEF];
-							break;
-						}
-					}
+					else {
+						//clear render screen
+						SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
+						SDL_RenderClear(gRenderer);
 
-					SDL_Rect rectToFitSurface = { 0,0,SCREEN_HEIGHT,SCREEN_WIDTH };
-					// blit the current surface
-					SDL_BlitScaled(gCurrentSurface, NULL, gScreenSurface, &rectToFitSurface);
-					SDL_UpdateWindowSurface(gWindow);
+						//render background to screen
+						backgroundTexture.render(0, 0);
+
+						//render foreground to screen
+						foregroundTexture.render(240,120);
+
+						//update screen
+						SDL_RenderPresent(gRenderer);
+					}
 				}
 			}
 		}
 	}
-
-	close();
-
 	return 0;
 }

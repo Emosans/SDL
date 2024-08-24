@@ -5,6 +5,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{3497450B-03BF-4509-876E-369F3F6F0C41}|SDL\\SDL.vcxproj|C:\\Users\\shrey\\OneDrive\\Documents\\C\u002B\u002B\\SDL\\SDL\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{3497450B-03BF-4509-876E-369F3F6F0C41}|SDL\\SDL.vcxproj|solutionrelative:SDL\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3497450B-03BF-4509-876E-369F3F6F0C41}|SDL\\SDL.vcxproj|C:\\Users\\shrey\\OneDrive\\Documents\\C\u002B\u002B\\SDL\\SDL\\simpleWindowImg.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{3497450B-03BF-4509-876E-369F3F6F0C41}|SDL\\SDL.vcxproj|solutionrelative:SDL\\simpleWindowImg.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     }
   ],
   "DocumentGroupContainers": [
@@ -14,8 +18,22 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "simpleWindowImg.cpp",
+              "DocumentMoniker": "C:\\Users\\shrey\\OneDrive\\Documents\\C\u002B\u002B\\SDL\\SDL\\simpleWindowImg.cpp",
+              "RelativeDocumentMoniker": "SDL\\simpleWindowImg.cpp",
+              "ToolTip": "C:\\Users\\shrey\\OneDrive\\Documents\\C\u002B\u002B\\SDL\\SDL\\simpleWindowImg.cpp",
+              "RelativeToolTip": "SDL\\simpleWindowImg.cpp",
+              "ViewState": "AQIAAAEAAAAAAAAAAAAqwKoAAAAHAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-08-22T11:20:46.732Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -24,9 +42,9 @@
               "RelativeDocumentMoniker": "SDL\\main.cpp",
               "ToolTip": "C:\\Users\\shrey\\OneDrive\\Documents\\C\u002B\u002B\\SDL\\SDL\\main.cpp",
               "RelativeToolTip": "SDL\\main.cpp",
-              "ViewState": "AQIAAAkAAAAAAAAAAAAAAB0AAAAAAAAA",
+              "ViewState": "AQIAAJYAAAAAAAAAAAAswKAAAAADAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2024-08-21T08:25:35.295Z",
+              "WhenOpened": "2024-08-22T15:30:00.325Z",
               "EditorCaption": ""
             }
           ]
