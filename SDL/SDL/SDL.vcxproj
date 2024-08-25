@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="imageRGBchanger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="overlapImages.cpp" />
     <ClCompile Include="simpleWindowImg.cpp" />

@@ -1,43 +1,34 @@
+#include<stdio.h>
 #include<SDL.h>
 #undef main;
 #include<SDL_image.h>
-#include<stdio.h>
-#include<iostream>
 #include<string>
+#include<iostream>
 using namespace std;
 
 SDL_Window* gWindow = NULL;
-SDL_Renderer* gRenderer;
 SDL_Surface* gScreenSurface = NULL;
+SDL_Renderer* gRenderer;
 
 class LTexture {
 public:
-	//allocate
 	LTexture();
-
-	//deallocate
 	~LTexture();
-
-	//free
 	void free();
-
-	//load the image file
-	bool loadFromFile(string path);
-
-	//set rgb
+	bool loadImage(string path);
 	void setColor(Uint8 red, Uint8 green, Uint8 blue);
-
-
-	//render the images at x,y
-	void render(int x, int y, SDL_Rect* srcRect = NULL);
+	void setToBlend(SDL_BlendMode blending);
+	void setAlpha(Uint8 alpha);
+	void render(int x, int y, SDL_Rect* clip = NULL);
 
 private:
-	SDL_Texture* finalTexture;
-	int mWidth;
-	int mHeight;
+	SDL_Texture* finalTexture = NULL;
+	int mWidth = 0;
+	int mHeight = 0;
 };
 
 LTexture gModulatedTexture;
+LTexture gBackgroundTexture;
 
 LTexture::LTexture() {
 	finalTexture = NULL;
@@ -57,25 +48,21 @@ void LTexture::free() {
 	}
 }
 
-bool LTexture::loadFromFile(string path) {
-	free();
-
+bool LTexture::loadImage(string path) {
 	SDL_Texture* newTexture = NULL;
-
 	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
 
 	if (loadedSurface == NULL) {
 		printf("Failed");
 	}
 	else {
-		newTexture = SDL_CreateTextureFromSurface(gRenderer,loadedSurface);
-		if (newTexture != NULL) {
-
-		mWidth = loadedSurface->w;
-		mHeight = loadedSurface->h;
+		newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+		if (!newTexture) {
+			printf("Failed");
 		}
 		else {
-			printf("Failed");
+			mWidth = loadedSurface->w;
+			mHeight = loadedSurface->h;
 		}
 		SDL_FreeSurface(loadedSurface);
 	}
@@ -83,34 +70,37 @@ bool LTexture::loadFromFile(string path) {
 	return finalTexture != NULL;
 }
 
-void LTexture::setColor(Uint8 red,Uint8 green, Uint8 blue) {
-	SDL_SetTextureColorMod(finalTexture, red, green, blue);
+void LTexture::setToBlend(SDL_BlendMode blending) {
+	//create the blend
+	SDL_SetTextureBlendMode(finalTexture, blending);
 }
 
-void LTexture::render(int x, int y, SDL_Rect* srcRect) {
-	SDL_Rect maxRect = { 0,0,mWidth,mHeight };
-	SDL_RenderCopy(gRenderer, finalTexture, NULL, NULL);
+void LTexture::setAlpha(Uint8 alpha) {
+	SDL_SetTextureAlphaMod(finalTexture, alpha);
 }
 
-
+void LTexture::render(int x, int y,SDL_Rect* clip) {
+	SDL_Rect dRect = { x,y,mWidth,mHeight };
+	SDL_RenderCopy(gRenderer, finalTexture, NULL, &dRect);
+}
 
 bool init() {
 	bool success = true;
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-		printf("SDL could not be loaded");
+	if (SDL_INIT_VIDEO < 0) {
+		printf("failed");
 		success = false;
 	}
 	else {
-		gWindow = SDL_CreateWindow("SDL Image", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 500, 500, SDL_WINDOW_SHOWN);
+		gWindow = SDL_CreateWindow("FadeinOut", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800,500,SDL_WINDOW_SHOWN);
 		if (gWindow == NULL) {
-			printf("Window could not be loaded");
+			printf("Failed");
 			success = false;
 		}
 		else {
 			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
 			if (gRenderer == NULL) {
-				printf("Failed");
+				printf("False");
 				success = false;
 			}
 			else {
@@ -124,28 +114,36 @@ bool init() {
 bool loadmedia() {
 	bool success = true;
 
-	if (!gModulatedTexture.loadFromFile("Images/white.jpg")) {
-		printf("False");
+	if (!gModulatedTexture.loadImage("Images/fadeout.png")) {
+		printf("Failed");
+		success = false;
+	}
+	else {
+		gModulatedTexture.setToBlend(SDL_BLENDMODE_BLEND);
+	}
+
+	if (!gBackgroundTexture.loadImage("Images/fadein.png")) {
+		printf("failed");
 		success = false;
 	}
 	return success;
 }
 
 void close() {
-	SDL_DestroyWindow(gWindow);
 	SDL_DestroyRenderer(gRenderer);
+	SDL_DestroyWindow(gWindow);
 	gModulatedTexture.free();
+	gBackgroundTexture.free();
+
 	IMG_Quit();
 	SDL_Quit();
 }
 
 int main() {
 	bool quit = false;
-	SDL_Event e;
 
-	Uint8 r = 255;
-	Uint8 g = 255;
-	Uint8 b = 255;
+	SDL_Event e;
+	Uint8 a = 255;
 
 	if (!init()) {
 		printf("Failed");
@@ -160,43 +158,55 @@ int main() {
 					if (e.type == SDL_QUIT) {
 						quit = true;
 					}
-					else if(e.type==SDL_KEYDOWN){
+					else if (e.type == SDL_KEYDOWN) {
 						switch (e.key.keysym.sym) {
-						case SDLK_r:
-							r += 32;
-							break;
-						case SDLK_g:
-							g += 32;
-							break;
-						case SDLK_b:
-							b += 32;
-							break;
+							//increase alpha to display forground image
 						case SDLK_w:
-							r -= 32;
-							break;
-						case SDLK_a:
-							g -= 32;
+							if (a + 32 > 255) {
+								a = 255;
+							}
+							else {
+								a += 32;
+							}
 							break;
 						case SDLK_s:
-							b -= 32;
+							//decrease alpha to display background image
+							if (a - 32 < 0) {
+								a = 0;
+							}
+							else {
+								a -= 32;
+							}
 							break;
 						default:
 							break;
 						}
 					}
 				}
-				//Clear screen
+				//clear renderer
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
 
-				//Modulate and render texture
-				gModulatedTexture.setColor(r, g, b);
+				//set background
+				gBackgroundTexture.render(0, 0);
+
+				//set foreground
+				gModulatedTexture.setAlpha(a);
 				gModulatedTexture.render(0, 0);
 
-				//Update screen
 				SDL_RenderPresent(gRenderer);
+
+
 			}
-		}	
+		}
 	}
-		return 0;
+	close();
+	return 0;
 }
+
+
+
+
+
+
+
