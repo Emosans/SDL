@@ -1,39 +1,35 @@
-#include<stdio.h>
 #include<SDL.h>
-#undef main;
 #include<SDL_image.h>
-#include<string>
 #include<iostream>
+#include<stdio.h>
+#undef main
+#include<string>
 using namespace std;
-
-SDL_Window* gWindow = NULL;
-SDL_Surface* gScreenSurface = NULL;
-SDL_Renderer* gRenderer;
 
 class LTexture {
 public:
 	LTexture();
 	~LTexture();
 	void free();
-	bool loadImage(string path);
-	void setColor(Uint8 red, Uint8 green, Uint8 blue);
-	void setToBlend(SDL_BlendMode blending);
-	void setAlpha(Uint8 alpha);
-	void render(int x, int y, SDL_Rect* clip = NULL);
-
+	bool loadImageFromFile(string path);
+	int getWidth();
+	int getHeight();
+	void render(int x, int y, SDL_Rect* clip = NULL, double angle = 0.0, SDL_Point* center = NULL, SDL_RendererFlip flip = SDL_FLIP_NONE);
 private:
-	SDL_Texture* finalTexture = NULL;
-	int mWidth = 0;
-	int mHeight = 0;
+	SDL_Texture* finalTexture;
+	int finalWidth;
+	int finalHeight;
 };
 
-LTexture gModulatedTexture;
-LTexture gBackgroundTexture;
+SDL_Window* gWindow = NULL;
+SDL_Renderer* gRenderer;
+SDL_Surface* gScreenSurface = NULL;
+LTexture gArrowTexture;
 
 LTexture::LTexture() {
 	finalTexture = NULL;
-	mWidth = 0;
-	mHeight = 0;
+	finalWidth = 0;
+	finalHeight = 0;
 }
 
 LTexture::~LTexture() {
@@ -43,26 +39,27 @@ LTexture::~LTexture() {
 void LTexture::free() {
 	if (finalTexture != NULL) {
 		finalTexture = NULL;
-		mWidth = 0;
-		mHeight = 0;
+		finalWidth = 0;
+		finalHeight = 0;
 	}
 }
 
-bool LTexture::loadImage(string path) {
+bool LTexture::loadImageFromFile(string path) {
 	SDL_Texture* newTexture = NULL;
+
 	SDL_Surface* loadedSurface = IMG_Load(path.c_str());
 
-	if (loadedSurface == NULL) {
+	if (!loadedSurface) {
 		printf("Failed");
 	}
 	else {
-		newTexture = SDL_CreateTextureFromSurface(gRenderer, loadedSurface);
+		newTexture = SDL_CreateTextureFromSurface(gRenderer,loadedSurface);
 		if (!newTexture) {
 			printf("Failed");
 		}
 		else {
-			mWidth = loadedSurface->w;
-			mHeight = loadedSurface->h;
+			finalWidth = loadedSurface->w;
+			finalHeight = loadedSurface->h;
 		}
 		SDL_FreeSurface(loadedSurface);
 	}
@@ -70,37 +67,41 @@ bool LTexture::loadImage(string path) {
 	return finalTexture != NULL;
 }
 
-void LTexture::setToBlend(SDL_BlendMode blending) {
-	//create the blend
-	SDL_SetTextureBlendMode(finalTexture, blending);
+void LTexture::render(int x, int y, SDL_Rect* clips, double angle,SDL_Point*center, SDL_RendererFlip flip) {
+	SDL_Rect quadRect = { 0,0,finalWidth,finalHeight };
+
+	if (clips != NULL) {
+		quadRect.w = clips->w;
+		quadRect.h = clips->h;
+	}
+
+	SDL_RenderCopyEx(gRenderer, finalTexture, clips, &quadRect, angle, center, flip);
 }
 
-void LTexture::setAlpha(Uint8 alpha) {
-	SDL_SetTextureAlphaMod(finalTexture, alpha);
+int LTexture::getWidth() {
+	return finalWidth;
 }
 
-void LTexture::render(int x, int y,SDL_Rect* clip) {
-	SDL_Rect dRect = { x,y,mWidth,mHeight };
-	SDL_RenderCopy(gRenderer, finalTexture, NULL, &dRect);
+int LTexture::getHeight() {
+	return finalHeight;
 }
 
 bool init() {
 	bool success = true;
 
 	if (SDL_INIT_VIDEO < 0) {
-		printf("failed");
+		printf("Failed");
 		success = false;
 	}
 	else {
-		gWindow = SDL_CreateWindow("FadeinOut", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800,500,SDL_WINDOW_SHOWN);
+		gWindow = SDL_CreateWindow("Rotation and flipping", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 500, 500, SDL_WINDOW_SHOWN);
 		if (gWindow == NULL) {
 			printf("Failed");
-			success = false;
 		}
 		else {
-			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED);
+			gRenderer = SDL_CreateRenderer(gWindow, -1, SDL_RENDERER_ACCELERATED| SDL_RENDERER_PRESENTVSYNC);
 			if (gRenderer == NULL) {
-				printf("False");
+				printf("Failed");
 				success = false;
 			}
 			else {
@@ -114,36 +115,27 @@ bool init() {
 bool loadmedia() {
 	bool success = true;
 
-	if (!gModulatedTexture.loadImage("Images/fadeout.png")) {
+	if (!gArrowTexture.loadImageFromFile("Images/arrow.png")) {
 		printf("Failed");
-		success = false;
-	}
-	else {
-		gModulatedTexture.setToBlend(SDL_BLENDMODE_BLEND);
-	}
-
-	if (!gBackgroundTexture.loadImage("Images/fadein.png")) {
-		printf("failed");
-		success = false;
+		success=false;
 	}
 	return success;
 }
 
 void close() {
-	SDL_DestroyRenderer(gRenderer);
 	SDL_DestroyWindow(gWindow);
-	gModulatedTexture.free();
-	gBackgroundTexture.free();
+	SDL_DestroyRenderer(gRenderer);
 
+	gArrowTexture.free();
 	IMG_Quit();
 	SDL_Quit();
 }
 
 int main() {
 	bool quit = false;
-
 	SDL_Event e;
-	Uint8 a = 255;
+	double degreesOfRotation = 0.0;
+	SDL_RendererFlip flippedState = SDL_FLIP_NONE;
 
 	if (!init()) {
 		printf("Failed");
@@ -158,55 +150,35 @@ int main() {
 					if (e.type == SDL_QUIT) {
 						quit = true;
 					}
-					else if (e.type == SDL_KEYDOWN) {
-						switch (e.key.keysym.sym) {
-							//increase alpha to display forground image
-						case SDLK_w:
-							if (a + 32 > 255) {
-								a = 255;
-							}
-							else {
-								a += 32;
-							}
+					else if(e.type==SDL_KEYDOWN) {
+						switch (e.key.keysym.sym){
+						case SDLK_d:
+							degreesOfRotation += 60;
 							break;
-						case SDLK_s:
-							//decrease alpha to display background image
-							if (a - 32 < 0) {
-								a = 0;
-							}
-							else {
-								a -= 32;
-							}
+						case SDLK_r:
+							degreesOfRotation -= 60;
+							break;
+						case SDLK_h:
+							flippedState = SDL_FLIP_HORIZONTAL;
+							break;
+						case SDLK_w:
+							flippedState = SDL_FLIP_NONE;
+							break;
+						case SDLK_v:
+							flippedState = SDL_FLIP_VERTICAL;
 							break;
 						default:
 							break;
 						}
 					}
 				}
-				//clear renderer
 				SDL_SetRenderDrawColor(gRenderer, 0xFF, 0xFF, 0xFF, 0xFF);
 				SDL_RenderClear(gRenderer);
 
-				//set background
-				gBackgroundTexture.render(0, 0);
-
-				//set foreground
-				gModulatedTexture.setAlpha(a);
-				gModulatedTexture.render(0, 0);
+				gArrowTexture.render((500 - gArrowTexture.getWidth()) / 2, (500 - gArrowTexture.getHeight()) / 2, NULL, degreesOfRotation, NULL, flippedState);
 
 				SDL_RenderPresent(gRenderer);
-
-
 			}
 		}
 	}
-	close();
-	return 0;
 }
-
-
-
-
-
-
-

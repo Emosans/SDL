@@ -24,6 +24,12 @@
     <ClCompile Include="imageRGBchanger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="imageBlending.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="spriteAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
