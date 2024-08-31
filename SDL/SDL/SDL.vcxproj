@@ -142,6 +142,7 @@
     <ClCompile Include="imageRGBchanger.cpp" />
     <ClCompile Include="imageBlending.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rotationFlipping.cpp" />
     <ClCompile Include="spriteAnimation.cpp" />
     <ClCompile Include="overlapImages.cpp" />
     <ClCompile Include="simpleWindowImg.cpp" />
